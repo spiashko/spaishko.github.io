@@ -1,0 +1,4 @@
+baseURL = 'https://spiashko.github.io/'
+languageCode = 'en-us'
+title = 'Siarhei Piashko'
+theme = "ananke"
