@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Siarhei Piashko</title>
-    <link>https://spiashko.github.io/</link>
-    <description>Recent content on Siarhei Piashko</description>
+    <title>Posts on Siarhei Piashko</title>
+    <link>https://spiashko.github.io/posts/</link>
+    <description>Recent content in Posts on Siarhei Piashko</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 02 Oct 2021 20:17:14 +0200</lastBuildDate><atom:link href="https://spiashko.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 02 Oct 2021 20:17:14 +0200</lastBuildDate><atom:link href="https://spiashko.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>My First Post</title>
       <link>https://spiashko.github.io/posts/my-first-post/</link>
