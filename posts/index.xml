@@ -6,14 +6,15 @@
     <description>Recent content in Posts on Siarhei Piashko</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sat, 02 Oct 2021 20:17:14 +0200</lastBuildDate><atom:link href="https://spiashko.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Wed, 05 Jan 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://spiashko.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>My First Post</title>
-      <link>https://spiashko.github.io/posts/my-first-post/</link>
-      <pubDate>Sat, 02 Oct 2021 20:17:14 +0200</pubDate>
+      <title>My DRY implementation of GET rest-point</title>
+      <link>https://spiashko.github.io/posts/rest-persistence/</link>
+      <pubDate>Wed, 05 Jan 2022 00:00:00 +0000</pubDate>
       
-      <guid>https://spiashko.github.io/posts/my-first-post/</guid>
-      <description>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi facilisis, ipsum quis laoreet feugiat, magna leo fermentum libero, ac fermentum odio mauris sit amet sapien. Duis a nibh aliquam odio elementum cursus eget sit amet risus. Vivamus porttitor, justo et mattis sagittis, diam ante tempus elit, id mattis magna turpis at tellus. Aenean eu auctor magna. Aenean ac augue velit. Donec porttitor justo vel neque rhoncus, feugiat viverra turpis posuere. Praesent tristique lacus vitae luctus aliquet.</description>
+      <guid>https://spiashko.github.io/posts/rest-persistence/</guid>
+      <description>Introduction For long time I was interested in finding the most simple, small, flexible and the same time efficient implementation of GET rest-points. So in this article I will try to share my findings and hope you discover something interesting for you. And to make it easier to explain and understand let&amp;rsquo;s design and implement simple application with a couple of entities.
+Design application Assume we need to develop simple application to serve data about people and theirs cats.</description>
     </item>
     
   </channel>
