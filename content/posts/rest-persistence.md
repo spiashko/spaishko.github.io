@@ -12,25 +12,25 @@ And to make it easier to explain and understand let's design and implement simpl
 ### Design application
 
 Assume we need to develop simple application to serve data about **people** and theirs **cats**. And this application
-should have features:
+should have next features:
 
 | Features   | Request params    |
 |------------|-------------------|
 | filtering  | filter            |
-| pagination | limit;offset;sort |
 | inclusion  | include           |
 
-**note:** by inclusion means to allow requester define scope of receiving data (like GraphQL)
+**note:** by inclusion means to allow requester define scope of receiving data (like GraphQL or in REST
+world [JSON:API](https://jsonapi.org/))
 
 Considering requirements above our application should be able to handle such GET requests as below
 
 ```
-https://api.example.com/examples?filter=<some_condition>limit=<x>&offset=<x>&sort=<sort_condition>&include=<some_fields>
+https://api.example.com/examples?filter=<some_condition>&include=<some_fields>
 ```
 
 And let's briefly describe our entities:
 
-rest-persistence.png
+![ERD](https://spiashko.github.io/static/rest-persistence.png)
 
 ### Filtering
 
@@ -55,10 +55,106 @@ To make it even more convenient we can create custom annotation which will be us
     }
 ```
 
-### Pagination
+### Inclusion
 
-Here everything is super easy as spring data has
+Here is the most interesting part at least for me:) So we want a user define a scope of receiving data, and also we
+don't want to write a lot of code, ideally just one annotation as it is done in filtering part.
+
+So first I looked at JSON:API implementations in Java to steal solution from there and the most ready for production was
+project [elide](https://elide.io/), but I found that it has build in N+1 problem which is by design there and beside of
+this it looks really not usual comparing to standard spring boot, you may find demo
+app [here](https://github.com/spiashko/elide-demo), so I continued my research.
+
+Obviously I started to look at GraphQL implementations trying to steal solution from them. While looking, I bumped
+into [blaze persistence](https://persistence.blazebit.com/). I must say it is very nice lib which have solutions for
+different data access problems. Actually thanks to this lib I found a solution for cursor pagination, but it is for
+separate article. And even-though in the end this lib doesn't contain that magic annotation I found it worth to mention.
+[Here](https://github.com/spiashko/blaze-persistence-graphql-demo) is my demo project with Blaze Persistence GraphQL.
+
+After some time I
+found [this article about GraphQL](https://piotrminkowski.com/2020/07/31/an-advanced-guide-to-graphql-with-spring-boot/)
+from Piotr Minkowski and the most interesting part is this code snippet:
+
+```
+private Specification<Department> fetchEmployees() {
+   return (Specification<Department>) (root, query, builder) -> {
+      Fetch<Department, Employee> f = root.fetch("employees", JoinType.LEFT);
+      Join<Department, Employee> join = (Join<Department, Employee>) f;
+      return join.getOn();
+   };
+}
+```
+
+So the key point is the fact that we can make fetch join right inside Specification. And knowing that fact writing
+custom solution is just piece of cake and here it is:
+
+```
+public class RfetchSupport {
+
+    public Specification<Object> toSpecification(List<String> includedPaths) {
+        Specification<Object> rfetchSpec = includedPaths.stream()
+                .map(this::buildSpec)
+                .reduce(Specification.where(null),
+                        Specification::and);
+        return rfetchSpec;
+    }
+
+    private Specification<Object> buildSpec(String attributePath) {
+        return (root, query, builder) -> {
+            PropertyPath path = PropertyPath.from(attributePath, root.getJavaType());
+            FetchParent<Object, Object> f = traversePath(root, path);
+            Join<Object, Object> join = (Join<Object, Object>) f;
+
+            query.distinct(true);
+
+            return join.getOn();
+        };
+    }
+
+    private FetchParent<Object, Object> traversePath(FetchParent<?, ?> root, PropertyPath path) {
+        FetchParent<Object, Object> result = root.fetch(path.getSegment(), JoinType.LEFT);
+        return path.hasNext() ? traversePath(result, Objects.requireNonNull(path.next())) : result;
+    }
+
+}
+```
+
+And obviously we can create custom annotation to make our controller looks like below
+
+```
+    #http://localhost:8080/cats?include=father;mother
+    @GetMapping("/cats")
+    public List<Cat> findAll(
+            @RfetchSpec Specification<Cat> rFetchSpec
+    ) {
+        List<Cat> result = searchService.findAll(rFetchSpec);
+        return result;
+    }
+```
 
 ### Collect all together
 
-### Conclusion
+Long story short now we can define our GET controller in super short way and give client as much flexibility as possible.
+
+```
+    #http://localhost:8080//cats?filter=owner.name==bob&include=father;mother
+    @GetMapping("/cats")
+    public List<Cat> findAll(
+            @RfetchSpec Specification<Cat> rFetchSpec,
+            @RsqlSpec Specification<Cat> rSqlSpec
+    ) {
+        val spec = Stream.of(rFetchSpec, rSqlSpec)
+                .reduce(Specification.where(null),
+                        Specification::and);
+        List<Cat> result = searchService.findAll(spec);
+        return result;
+    }
+
+```
+
+You may find all code in my [github](https://github.com/spiashko/rest-persistence)
+
+### TODO
+
+Create annotation for cursor pagination
+
