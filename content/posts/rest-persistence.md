@@ -13,12 +13,7 @@ And to make it easier to explain and understand let's design and implement simpl
 ### Design application
 
 Assume we need to develop simple application to serve data about **people** and theirs **cats**. And this application
-should have next features:
-
-| Features   | Request params    |
-|------------|-------------------|
-| filtering  | filter            |
-| inclusion  | include           |
+should have basic features as filtering and inclusion.
 
 **note:** by inclusion means to allow requester define scope of receiving data (like GraphQL or in REST
 world [JSON:API](https://jsonapi.org/))
@@ -31,7 +26,7 @@ https://api.example.com/examples?filter=<some_condition>&include=<some_fields>
 
 And let's briefly describe our entities:
 
-![ERD](https://spiashko.github.io/static/rest-persistence.png)
+![ERD](https://spiashko.github.io/rest-persistence.png)
 
 ### Filtering
 
@@ -135,7 +130,8 @@ And obviously we can create custom annotation to make our controller looks like 
 
 ### Collect all together
 
-Long story short now we can define our GET controller in super short way and give client as much flexibility as possible.
+Long story short now we can define our GET controller in super short way and give client as much flexibility as
+possible.
 
 ```
     #http://localhost:8080//cats?filter=owner.name==bob&include=father;mother
