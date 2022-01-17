@@ -1,6 +1,7 @@
 ---
 title: "My DRY implementation of GET rest-point"
-date: 2022-01-05 draft: true
+date: 2022-01-05 
+draft: true
 ---
 
 ### Introduction
