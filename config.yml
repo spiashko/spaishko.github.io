@@ -1,0 +1,19 @@
+baseURL: 'https://spiashko.github.io/'
+languageCode: 'en'
+title: 'Siarhei Piashko'
+theme: "PaperMod"
+
+params:
+  assets:
+    favicon: "favicon.ico"
+
+  label:
+    text: "Home"
+  homeInfoParams:
+    Title: "Siarhei Piashko"
+    Content: >
+      Java Spring Developer.
+
+  socialIcons:
+    - name: github
+      url: "https://github.com/spiashko"

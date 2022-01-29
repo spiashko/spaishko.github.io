@@ -1,7 +1,7 @@
 ---
-title: "My DRY implementation of GET rest-point"
-date: 2022-01-05 
-draft: true
+title: "My DRY implementation of GET REST endpoint"
+date: 2022-01-05
+hideSummary: true
 ---
 
 ### Introduction
@@ -30,18 +30,19 @@ And let's briefly describe our entities:
 
 ### Filtering
 
-There is lots of different approaches how to achieve this goal but my personal choice is `RSQL` with spring-data
-`Specification` and in particular this spring boot starter https://github.com/perplexhub/rsql-jpa-specification
+There is lots of different approaches how to achieve this goal but my personal choice is **RSQL** with spring-data
+**Specification** and in particular this spring boot starter https://github.com/perplexhub/rsql-jpa-specification
 
-In short library above allows converting string like `code=='demo';company.id>100` into spring-data `Specification`
-which later we be evaluated and as a result we will get only entities which has field `code` as `demo` and
-theirs `company` relation has `id` more than `100`
+In short library above allows converting string like **code=='demo';company.id>100** into spring-data **Specification**
+which later we be evaluated and as a result we will get only entities which has field **code** as **demo** and theirs **
+company** relation has **id** more than **100**
 
 To make it even more convenient we can create custom annotation which will be used in next way:
 
-```
-    #http://localhost:8080/cats?filter=owner.name==bob;name==scooter
-    #expression inside filter param mapped into rsqlSpec argument
+[//]: # (@formatter:off)
+```java
+    //http://localhost:8080/cats?filter=owner.name==bob;name==scooter
+    //expression inside filter param mapped into rsqlSpec argument
     @GetMapping("/cats")
     public List<Cat> findAll(
             @RsqlSpec Specification<Cat> rsqlSpec
@@ -50,6 +51,7 @@ To make it even more convenient we can create custom annotation which will be us
         return result;
     }
 ```
+[//]: # (@formatter:on)
 
 ### Inclusion
 
@@ -71,7 +73,8 @@ After some time I
 found [this article about GraphQL](https://piotrminkowski.com/2020/07/31/an-advanced-guide-to-graphql-with-spring-boot/)
 from Piotr Minkowski and the most interesting part is this code snippet:
 
-```
+[//]: # (@formatter:off)
+```java
 private Specification<Department> fetchEmployees() {
    return (Specification<Department>) (root, query, builder) -> {
       Fetch<Department, Employee> f = root.fetch("employees", JoinType.LEFT);
@@ -80,11 +83,13 @@ private Specification<Department> fetchEmployees() {
    };
 }
 ```
+[//]: # (@formatter:on)
 
 So the key point is the fact that we can make fetch join right inside Specification. And knowing that fact writing
 custom solution is just piece of cake and here it is:
 
-```
+[//]: # (@formatter:off)
+```java
 public class RfetchSupport {
 
     public Specification<Object> toSpecification(List<String> includedPaths) {
@@ -114,11 +119,13 @@ public class RfetchSupport {
 
 }
 ```
+[//]: # (@formatter:on)
 
 And obviously we can create custom annotation to make our controller looks like below
 
-```
-    #http://localhost:8080/cats?include=father;mother
+[//]: # (@formatter:off)
+```java
+    //http://localhost:8080/cats?include=father;mother
     @GetMapping("/cats")
     public List<Cat> findAll(
             @RfetchSpec Specification<Cat> rFetchSpec
@@ -127,14 +134,16 @@ And obviously we can create custom annotation to make our controller looks like 
         return result;
     }
 ```
+[//]: # (@formatter:on)
 
 ### Collect all together
 
 Long story short now we can define our GET controller in super short way and give client as much flexibility as
 possible.
 
-```
-    #http://localhost:8080//cats?filter=owner.name==bob&include=father;mother
+[//]: # (@formatter:off)
+```java
+    //http://localhost:8080//cats?filter=owner.name==bob&include=father;mother
     @GetMapping("/cats")
     public List<Cat> findAll(
             @RfetchSpec Specification<Cat> rFetchSpec,
@@ -146,8 +155,8 @@ possible.
         List<Cat> result = searchService.findAll(spec);
         return result;
     }
-
 ```
+[//]: # (@formatter:on)
 
 You may find all code in my [github](https://github.com/spiashko/rest-persistence)
 
