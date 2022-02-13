@@ -1,10 +1,11 @@
-[//]: # (@formatter:off)
 ---
 title: "My DRY implementation of GET REST endpoint"
-date: 2022-01-05 
+
+date: 2022-01-05
+
 hideSummary: true
+
 ---
-[//]: # (@formatter:on)
 
 ### Introduction
 
@@ -53,11 +54,12 @@ CREATE TABLE cat
 ### Filtering
 
 There is lots of different approaches how to achieve this goal but my personal choice is **RSQL** with spring-data
-**Specification** and in particular this spring boot starter https://github.com/perplexhub/rsql-jpa-specification
+**Specification** and in particular [rsql-jpa-specification](https://github.com/perplexhub/rsql-jpa-specification)
+spring boot starter
 
-In short library above allows converting string like **code=='demo';company.id>100** into spring-data **Specification**
-which later we be evaluated and as a result we will get only entities which has field **code** as **demo** and theirs **
-company** relation has **id** more than **100**
+In short library above allows converting string like **owner.name==bob;name==scooter** into spring-data
+**Specification** which later we be evaluated and as a result we will get only cats which has owner with name bob and
+their name are scooter
 
 So in the end our controller will look like below:
 
@@ -88,8 +90,8 @@ separate article. And even-though in the end this lib doesn't contain that magic
 this lib worth to mention.
 [Here](https://github.com/spiashko/blaze-persistence-graphql-demo) is my demo project with Blaze Persistence GraphQL.
 
-So in the end I decided to write my own solution which basically resulted in my simple `rest-fetch` project which solves
-inclusion in a way described [here](https://github.com/spiashko/rest-fetch#rfetch) with all details.
+So in the end I decided to write my own solution which basically resulted in my simple project which solves inclusion in
+a way described in [rfetch section of rest-fetch readme](https://github.com/spiashko/rest-fetch#rfetch).
 
 ### Collect all together
 
@@ -105,10 +107,7 @@ If we want only one SQL:
             @RequestParam(value = "filter", required = false) String rsqlFilter,
             @RequestParam(value = "include", required = false) String rfetchInclude
     ) {
-        beforeRequestActionsExecutor.execute(rsqlFilter, rfetchInclude, Cat.class, View.Retrieve.class);
-
         Specification<Cat> fetchSpec = FetchAllInOneSpecTemplate.INSTANCE.toSpecification(RfetchSupport.compile(rfetchInclude, Cat.class));
-
         return repository.findAll(Specification.where(fetchSpec).and(RSQLJPASupport.rsql(rsqlFilter)));
     }
 ```
@@ -122,8 +121,6 @@ If we want to avoid cartesian product problem:
             @RequestParam(value = "filter", required = false) String rsqlFilter,
             @RequestParam(value = "include", required = false) String rfetchInclude
     ) {
-        beforeRequestActionsExecutor.execute(rsqlFilter, rfetchInclude, Person.class, View.Retrieve.class);
-
         return transactionTemplate.execute(s -> {
             List<Person> result = repository.findAll(RSQLJPASupport.rsql(rsqlFilter));
             fetchSmartTemplate.enrichList(RfetchSupport.compile(rfetchInclude, Person.class), result);
