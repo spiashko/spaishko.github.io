@@ -5,16 +5,14 @@
     <link>https://spiashko.github.io/posts/</link>
     <description>Recent content in Posts on Siarhei Piashko</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en</language>
-    <lastBuildDate>Wed, 05 Jan 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://spiashko.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <language>en</language><atom:link href="https://spiashko.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>My DRY implementation of GET REST endpoint</title>
-      <link>https://spiashko.github.io/posts/rest-persistence/</link>
-      <pubDate>Wed, 05 Jan 2022 00:00:00 +0000</pubDate>
+      <title></title>
+      <link>https://spiashko.github.io/posts/rest-fetch/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://spiashko.github.io/posts/rest-persistence/</guid>
-      <description>Introduction For long time I was interested in finding the most simple, small, flexible and the same time efficient implementation of GET rest-points. So in this article I will try to share my findings and hope you discover something interesting for you. And to make it easier to explain and understand let&amp;rsquo;s design and implement simple application with a couple of entities.
-Design application Assume we need to develop simple application to serve data about people and theirs cats.</description>
+      <guid>https://spiashko.github.io/posts/rest-fetch/</guid>
+      <description>title: &amp;ldquo;My DRY implementation of GET REST endpoint&amp;rdquo; date: 2022-01-05 hideSummary: true Introduction For long time I was interested in finding the most simple, small, flexible and the same time efficient implementation of GET rest-points. So in this article I will try to share my findings and hope you discover something interesting for you. And to make it easier to explain and understand let&amp;rsquo;s design and implement simple application with a couple of entities.</description>
     </item>
     
   </channel>

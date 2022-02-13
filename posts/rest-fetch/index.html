@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Siarhei Piashko</title>
+<meta name="keywords" content="" />
+<meta name="description" content="title: &ldquo;My DRY implementation of GET REST endpoint&rdquo; date: 2022-01-05 hideSummary: true Introduction For long time I was interested in finding the most simple, small, flexible and the same time efficient implementation of GET rest-points. So in this article I will try to share my findings and hope you discover something interesting for you. And to make it easier to explain and understand let&rsquo;s design and implement simple application with a couple of entities.">
+<meta name="author" content="">
+<link rel="canonical" href="https://spiashko.github.io/posts/rest-fetch/" />
+<link crossorigin="anonymous" href="/assets/css/stylesheet.min.c88963fe2d79462000fd0fb1b3737783c32855d340583e4523343f8735c787f0.css" integrity="sha256-yIlj/i15RiAA/Q&#43;xs3N3g8MoVdNAWD5FIzQ/hzXHh/A=" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.min.7680afc38aa6b15ddf158a4f3780b7b1f7dde7e91d26f073e6229bb7a0793c92.js" integrity="sha256-doCvw4qmsV3fFYpPN4C3sffd5&#43;kdJvBz5iKbt6B5PJI="
+    onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="https://spiashko.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://spiashko.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://spiashko.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://spiashko.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://spiashko.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<meta name="generator" content="Hugo 0.92.2" />
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --hljs-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><meta property="og:title" content="" />
+<meta property="og:description" content="title: &ldquo;My DRY implementation of GET REST endpoint&rdquo; date: 2022-01-05 hideSummary: true Introduction For long time I was interested in finding the most simple, small, flexible and the same time efficient implementation of GET rest-points. So in this article I will try to share my findings and hope you discover something interesting for you. And to make it easier to explain and understand let&rsquo;s design and implement simple application with a couple of entities." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://spiashko.github.io/posts/rest-fetch/" /><meta property="article:section" content="posts" />
+
+
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content=""/>
+<meta name="twitter:description" content="title: &ldquo;My DRY implementation of GET REST endpoint&rdquo; date: 2022-01-05 hideSummary: true Introduction For long time I was interested in finding the most simple, small, flexible and the same time efficient implementation of GET rest-points. So in this article I will try to share my findings and hope you discover something interesting for you. And to make it easier to explain and understand let&rsquo;s design and implement simple application with a couple of entities."/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "https://spiashko.github.io/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "",
+      "item": "https://spiashko.github.io/posts/rest-fetch/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "",
+  "name": "",
+  "description": "title: \u0026ldquo;My DRY implementation of GET REST endpoint\u0026rdquo; date: 2022-01-05 hideSummary: true Introduction For long time I was interested in finding the most simple, small, flexible and the same time efficient implementation of GET rest-points. So in this article I will try to share my findings and hope you discover something interesting for you. And to make it easier to explain and understand let\u0026rsquo;s design and implement simple application with a couple of entities.",
+  "keywords": [
+    
+  ],
+  "articleBody": " title: “My DRY implementation of GET REST endpoint” date: 2022-01-05 hideSummary: true Introduction For long time I was interested in finding the most simple, small, flexible and the same time efficient implementation of GET rest-points. So in this article I will try to share my findings and hope you discover something interesting for you. And to make it easier to explain and understand let’s design and implement simple application with a couple of entities.\nDesign application Assume we need to develop simple application to serve data about people and theirs cats. And this application should have basic features as filtering and inclusion.\nnote: by inclusion means to allow requester define scope of receiving data (like GraphQL or in REST world JSON:API)\nConsidering requirements above our application should be able to handle such GET requests as below\nhttps://api.example.com/examples?filter=\u0026include= And let’s briefly describe our entities:\nCREATE TABLE person ( id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), name TEXT UNIQUE NOT NULL, fk_best_friend UUID REFERENCES person (id) ); CREATE TABLE cat ( id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), name TEXT UNIQUE NOT NULL, dob DATE NOT NULL, gender TEXT NOT NULL, fk_owner UUID REFERENCES person (id) NOT NULL, fk_father UUID REFERENCES cat (id), fk_mother UUID REFERENCES cat (id) ); Filtering There is lots of different approaches how to achieve this goal but my personal choice is RSQL with spring-data Specification and in particular this spring boot starter https://github.com/perplexhub/rsql-jpa-specification\nIn short library above allows converting string like code==‘demo’;company.id100 into spring-data Specification which later we be evaluated and as a result we will get only entities which has field code as demo and theirs ** company** relation has id more than 100\nSo in the end our controller will look like below:\n//http://localhost:8080/cats?filter=owner.name==bob;name==scooter  @GetMapping(\"/cats\") public ListCat findAll( @RequestParam(value = \"filter\", required = false) String rsqlFilter ) { return repository.findAll(RSQLJPASupport.rsql(rsqlFilter)); } Inclusion Here is the most interesting part at least for me:) So we want a user define a scope of receiving data, and also we don’t want to write a lot of code, ideally as it is done in filtering part.\nSo first I looked at JSON:API implementations in Java to steal solution from there and the most ready for production was project elide, but I found that it has build in N+1 problem which is by design there and beside of this it looks really not usual comparing to standard spring boot, you may find demo app here, so I continued my research.\nObviously I started to look at GraphQL implementations trying to steal solution from them. While looking, I bumped into blaze persistence. I must say it is very nice lib which have solutions for different data access problems. Actually thanks to this lib I found a solution for cursor pagination, but it is for separate article. And even-though in the end this lib doesn’t contain that magic class similar to RSQLJPASupport I found this lib worth to mention. Here is my demo project with Blaze Persistence GraphQL.\nSo in the end I decided to write my own solution which basically resulted in my simple rest-fetch project which solves inclusion in a way described here with all details.\nCollect all together Long story short now we help of rsql and rfetch we can define our GET controller in super short way and give client as much flexibility as possible and at the same time control performance.\nIf we want only one SQL:\n@JsonView(View.Retrieve.class) @GetMapping(\"/cats\") public ListCat findAll( @RequestParam(value = \"filter\", required = false) String rsqlFilter, @RequestParam(value = \"include\", required = false) String rfetchInclude ) { beforeRequestActionsExecutor.execute(rsqlFilter, rfetchInclude, Cat.class, View.Retrieve.class); SpecificationCat fetchSpec = FetchAllInOneSpecTemplate.INSTANCE.toSpecification(RfetchSupport.compile(rfetchInclude, Cat.class)); return repository.findAll(Specification.where(fetchSpec).and(RSQLJPASupport.rsql(rsqlFilter))); } If we want to avoid cartesian product problem:\n@JsonView(View.Retrieve.class) @GetMapping public ListPerson findAll( @RequestParam(value = \"filter\", required = false) String rsqlFilter, @RequestParam(value = \"include\", required = false) String rfetchInclude ) { beforeRequestActionsExecutor.execute(rsqlFilter, rfetchInclude, Person.class, View.Retrieve.class); return transactionTemplate.execute(s - { ListPerson result = repository.findAll(RSQLJPASupport.rsql(rsqlFilter)); fetchSmartTemplate.enrichList(RfetchSupport.compile(rfetchInclude, Person.class), result); return result; }); } Project link: github\nTODO Add JSON:API integration\n",
+  "wordCount" : "660",
+  "inLanguage": "en",
+  "datePublished": "0001-01-01T00:00:00Z",
+  "dateModified": "0001-01-01T00:00:00Z",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://spiashko.github.io/posts/rest-fetch/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Siarhei Piashko",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://spiashko.github.io/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://spiashko.github.io/" accesskey="h" title="Home (Alt + H)">Home</a>
+            <span class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </span>
+        </div>
+        <ul id="menu">
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title">
+      
+    </h1>
+    <div class="post-meta">
+
+</div>
+  </header> 
+  <div class="post-content"><hr>
+<h2 id="hidesummary-true">title: &ldquo;My DRY implementation of GET REST endpoint&rdquo;
+date: 2022-01-05
+hideSummary: true</h2>
+<h3 id="introduction">Introduction<a hidden class="anchor" aria-hidden="true" href="#introduction">#</a></h3>
+<p>For long time I was interested in finding the most simple, small, flexible and the same time efficient implementation of
+GET rest-points. So in this article I will try to share my findings and hope you discover something interesting for you.
+And to make it easier to explain and understand let&rsquo;s design and implement simple application with a couple of entities.</p>
+<h3 id="design-application">Design application<a hidden class="anchor" aria-hidden="true" href="#design-application">#</a></h3>
+<p>Assume we need to develop simple application to serve data about <strong>people</strong> and theirs <strong>cats</strong>. And this application
+should have basic features as filtering and inclusion.</p>
+<p><strong>note:</strong> by inclusion means to allow requester define scope of receiving data (like GraphQL or in REST
+world <a href="https://jsonapi.org/">JSON:API</a>)</p>
+<p>Considering requirements above our application should be able to handle such GET requests as below</p>
+<pre tabindex="0"><code>https://api.example.com/examples?filter=&lt;some_condition&gt;&amp;include=&lt;some_relations&gt;
+</code></pre><p>And let&rsquo;s briefly describe our entities:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#66d9ef">CREATE</span> <span style="color:#66d9ef">TABLE</span> person
+(
+    id             UUID <span style="color:#66d9ef">PRIMARY</span> <span style="color:#66d9ef">KEY</span> <span style="color:#66d9ef">DEFAULT</span> uuid_generate_v4(),
+    name           TEXT <span style="color:#66d9ef">UNIQUE</span> <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span>,
+    fk_best_friend UUID <span style="color:#66d9ef">REFERENCES</span> person (id)
+);
+</code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#66d9ef">CREATE</span> <span style="color:#66d9ef">TABLE</span> cat
+(
+    id        UUID <span style="color:#66d9ef">PRIMARY</span> <span style="color:#66d9ef">KEY</span> <span style="color:#66d9ef">DEFAULT</span> uuid_generate_v4(),
+    name      TEXT <span style="color:#66d9ef">UNIQUE</span>                 <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span>,
+    dob       DATE                        <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span>,
+    gender    TEXT                        <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span>,
+    fk_owner  UUID <span style="color:#66d9ef">REFERENCES</span> person (id) <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span>,
+    fk_father UUID <span style="color:#66d9ef">REFERENCES</span> cat (id),
+    fk_mother UUID <span style="color:#66d9ef">REFERENCES</span> cat (id)
+);
+</code></pre></div><h3 id="filtering">Filtering<a hidden class="anchor" aria-hidden="true" href="#filtering">#</a></h3>
+<p>There is lots of different approaches how to achieve this goal but my personal choice is <strong>RSQL</strong> with spring-data
+<strong>Specification</strong> and in particular this spring boot starter <a href="https://github.com/perplexhub/rsql-jpa-specification">https://github.com/perplexhub/rsql-jpa-specification</a></p>
+<p>In short library above allows converting string like <strong>code==&lsquo;demo&rsquo;;company.id&gt;100</strong> into spring-data <strong>Specification</strong>
+which later we be evaluated and as a result we will get only entities which has field <strong>code</strong> as <strong>demo</strong> and theirs **
+company** relation has <strong>id</strong> more than <strong>100</strong></p>
+<p>So in the end our controller will look like below:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">    <span style="color:#75715e">//http://localhost:8080/cats?filter=owner.name==bob;name==scooter
+</span><span style="color:#75715e"></span>    <span style="color:#a6e22e">@GetMapping</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;/cats&#34;</span><span style="color:#f92672">)</span>
+    <span style="color:#66d9ef">public</span> List<span style="color:#f92672">&lt;</span>Cat<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">findAll</span><span style="color:#f92672">(</span>
+        <span style="color:#a6e22e">@RequestParam</span><span style="color:#f92672">(</span>value <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;filter&#34;</span><span style="color:#f92672">,</span> required <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">)</span> String rsqlFilter
+    <span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">return</span> repository<span style="color:#f92672">.</span><span style="color:#a6e22e">findAll</span><span style="color:#f92672">(</span>RSQLJPASupport<span style="color:#f92672">.</span><span style="color:#a6e22e">rsql</span><span style="color:#f92672">(</span>rsqlFilter<span style="color:#f92672">));</span>
+    <span style="color:#f92672">}</span>
+</code></pre></div><h3 id="inclusion">Inclusion<a hidden class="anchor" aria-hidden="true" href="#inclusion">#</a></h3>
+<p>Here is the most interesting part at least for me:) So we want a user define a scope of receiving data, and also we
+don&rsquo;t want to write a lot of code, ideally as it is done in filtering part.</p>
+<p>So first I looked at JSON:API implementations in Java to steal solution from there and the most ready for production was
+project <a href="https://elide.io/">elide</a>, but I found that it has build in N+1 problem which is by design there and beside of
+this it looks really not usual comparing to standard spring boot, you may find demo
+app <a href="https://github.com/spiashko/elide-demo">here</a>, so I continued my research.</p>
+<p>Obviously I started to look at GraphQL implementations trying to steal solution from them. While looking, I bumped
+into <a href="https://persistence.blazebit.com/">blaze persistence</a>. I must say it is very nice lib which have solutions for
+different data access problems. Actually thanks to this lib I found a solution for cursor pagination, but it is for
+separate article. And even-though in the end this lib doesn&rsquo;t contain that magic class similar to RSQLJPASupport I found
+this lib worth to mention.
+<a href="https://github.com/spiashko/blaze-persistence-graphql-demo">Here</a> is my demo project with Blaze Persistence GraphQL.</p>
+<p>So in the end I decided to write my own solution which basically resulted in my simple <code>rest-fetch</code> project which solves
+inclusion in a way described <a href="https://github.com/spiashko/rest-fetch#rfetch">here</a> with all details.</p>
+<h3 id="collect-all-together">Collect all together<a hidden class="anchor" aria-hidden="true" href="#collect-all-together">#</a></h3>
+<p>Long story short now we help of <code>rsql</code> and <code>rfetch</code> we can define our GET controller in super short way and give client
+as much flexibility as possible and at the same time control performance.</p>
+<p>If we want only one SQL:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">    <span style="color:#a6e22e">@JsonView</span><span style="color:#f92672">(</span>View<span style="color:#f92672">.</span><span style="color:#a6e22e">Retrieve</span><span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">)</span>
+    <span style="color:#a6e22e">@GetMapping</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;/cats&#34;</span><span style="color:#f92672">)</span>
+    <span style="color:#66d9ef">public</span> List<span style="color:#f92672">&lt;</span>Cat<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">findAll</span><span style="color:#f92672">(</span>
+            <span style="color:#a6e22e">@RequestParam</span><span style="color:#f92672">(</span>value <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;filter&#34;</span><span style="color:#f92672">,</span> required <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">)</span> String rsqlFilter<span style="color:#f92672">,</span>
+            <span style="color:#a6e22e">@RequestParam</span><span style="color:#f92672">(</span>value <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;include&#34;</span><span style="color:#f92672">,</span> required <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">)</span> String rfetchInclude
+    <span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        beforeRequestActionsExecutor<span style="color:#f92672">.</span><span style="color:#a6e22e">execute</span><span style="color:#f92672">(</span>rsqlFilter<span style="color:#f92672">,</span> rfetchInclude<span style="color:#f92672">,</span> Cat<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">,</span> View<span style="color:#f92672">.</span><span style="color:#a6e22e">Retrieve</span><span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">);</span>
+
+        Specification<span style="color:#f92672">&lt;</span>Cat<span style="color:#f92672">&gt;</span> fetchSpec <span style="color:#f92672">=</span> FetchAllInOneSpecTemplate<span style="color:#f92672">.</span><span style="color:#a6e22e">INSTANCE</span><span style="color:#f92672">.</span><span style="color:#a6e22e">toSpecification</span><span style="color:#f92672">(</span>RfetchSupport<span style="color:#f92672">.</span><span style="color:#a6e22e">compile</span><span style="color:#f92672">(</span>rfetchInclude<span style="color:#f92672">,</span> Cat<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">));</span>
+
+        <span style="color:#66d9ef">return</span> repository<span style="color:#f92672">.</span><span style="color:#a6e22e">findAll</span><span style="color:#f92672">(</span>Specification<span style="color:#f92672">.</span><span style="color:#a6e22e">where</span><span style="color:#f92672">(</span>fetchSpec<span style="color:#f92672">).</span><span style="color:#a6e22e">and</span><span style="color:#f92672">(</span>RSQLJPASupport<span style="color:#f92672">.</span><span style="color:#a6e22e">rsql</span><span style="color:#f92672">(</span>rsqlFilter<span style="color:#f92672">)));</span>
+    <span style="color:#f92672">}</span>
+</code></pre></div><p>If we want to avoid cartesian product problem:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">    <span style="color:#a6e22e">@JsonView</span><span style="color:#f92672">(</span>View<span style="color:#f92672">.</span><span style="color:#a6e22e">Retrieve</span><span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">)</span>
+    <span style="color:#a6e22e">@GetMapping</span>
+    <span style="color:#66d9ef">public</span> List<span style="color:#f92672">&lt;</span>Person<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">findAll</span><span style="color:#f92672">(</span>
+            <span style="color:#a6e22e">@RequestParam</span><span style="color:#f92672">(</span>value <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;filter&#34;</span><span style="color:#f92672">,</span> required <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">)</span> String rsqlFilter<span style="color:#f92672">,</span>
+            <span style="color:#a6e22e">@RequestParam</span><span style="color:#f92672">(</span>value <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;include&#34;</span><span style="color:#f92672">,</span> required <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">)</span> String rfetchInclude
+    <span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        beforeRequestActionsExecutor<span style="color:#f92672">.</span><span style="color:#a6e22e">execute</span><span style="color:#f92672">(</span>rsqlFilter<span style="color:#f92672">,</span> rfetchInclude<span style="color:#f92672">,</span> Person<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">,</span> View<span style="color:#f92672">.</span><span style="color:#a6e22e">Retrieve</span><span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">);</span>
+
+        <span style="color:#66d9ef">return</span> transactionTemplate<span style="color:#f92672">.</span><span style="color:#a6e22e">execute</span><span style="color:#f92672">(</span>s <span style="color:#f92672">-&gt;</span> <span style="color:#f92672">{</span>
+            List<span style="color:#f92672">&lt;</span>Person<span style="color:#f92672">&gt;</span> result <span style="color:#f92672">=</span> repository<span style="color:#f92672">.</span><span style="color:#a6e22e">findAll</span><span style="color:#f92672">(</span>RSQLJPASupport<span style="color:#f92672">.</span><span style="color:#a6e22e">rsql</span><span style="color:#f92672">(</span>rsqlFilter<span style="color:#f92672">));</span>
+            fetchSmartTemplate<span style="color:#f92672">.</span><span style="color:#a6e22e">enrichList</span><span style="color:#f92672">(</span>RfetchSupport<span style="color:#f92672">.</span><span style="color:#a6e22e">compile</span><span style="color:#f92672">(</span>rfetchInclude<span style="color:#f92672">,</span> Person<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">),</span> result<span style="color:#f92672">);</span>
+            <span style="color:#66d9ef">return</span> result<span style="color:#f92672">;</span>
+        <span style="color:#f92672">});</span>
+    <span style="color:#f92672">}</span>
+</code></pre></div><p>Project link: <a href="https://github.com/spiashko/rest-fetch">github</a></p>
+<h3 id="todo">TODO<a hidden class="anchor" aria-hidden="true" href="#todo">#</a></h3>
+<p>Add JSON:API integration</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2022 <a href="https://spiashko.github.io/">Siarhei Piashko</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://git.io/hugopapermod" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>
